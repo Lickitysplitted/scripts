@@ -6,7 +6,7 @@ from csv import DictWriter
 import typer
 from rich.progress import track
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import ContainerClient
+from azure.storage.blob import ContainerClient, BlobServiceClient
 
 __author__ = "Lickitysplitted"
 __version__ = "0.0.1"
@@ -39,15 +39,22 @@ def reporter(reppath: Path, repdata: List[dict]) -> None:
         logger.warn("CHECK-FAIL: Missing report path and/or report data")
 
 
-async def request(account_url: str, container: str, credential) -> List[dict]:
+def request(account_url: str, container: str, credential) -> List[dict]:
     if account_url and container:
-        container_client = ContainerClient(account_url=account_url, container_name=container, credential=credential)
+        azure_log = logging.getLogger("azure")
+        azure_log.setLevel(logging.WARNING)
+        urllib_log = logging.getLogger("urllib3")
+        urllib_log.setLevel(logging.WARNING)
+        blob_service_client = BlobServiceClient(account_url, credential=credential)
+        container_client = blob_service_client.get_container_client(container=container)
+        #container_client = ContainerClient(account_url=account_url, container_name=container, credential=credential)
         blobs = container_client.list_blob_names()
         reqlog = []
         for blob in track(blobs):
+            #print(blob)
             reqdata = {
-                "account",
-                "container",
+                account_url,
+                container,
                 blob
             }
             reqlog.append(reqdata)
@@ -60,22 +67,23 @@ async def request(account_url: str, container: str, credential) -> List[dict]:
 def bloblist(
     account: str = typer.Option(help="Azure storage account"),
     container: str = typer.Option(help="The name of the container for the blob."),
+    credential: str = typer.Option(help="SAS token."),
     report: Path = typer.Option(help="Filepath for report output"),
     verbose: int = typer.Option(0, "--verbose", "-v", count=True, max=4, help="Log verbosity level"
     ),
 ):
-    if account and report and container:
+    if account and report and container and credential:
         logging.basicConfig(level=(verbose * 10) - 40)
-        account_url = "https://{account}.blob.core.windows.net"
+        account_url = f'https://{account}.blob.core.windows.net'
         report = Path(report)
-        default_credential = DefaultAzureCredential()
+        #default_credential = DefaultAzureCredential()
         reporter(
             reppath=report,
             repdata=(
                 request(
                     account_url=account_url,
                     container=container,
-                    credential=default_credential
+                    credential=credential
                     )
             )
         )
