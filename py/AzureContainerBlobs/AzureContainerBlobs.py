@@ -21,7 +21,7 @@ def reporter(reppath: Path, repdata: List[dict]) -> None:
             writer = DictWriter(
                 repobj,
                 [
-                    "account",
+                    "account_url",
                     "container",
                     "blob"
                 ],
@@ -30,7 +30,7 @@ def reporter(reppath: Path, repdata: List[dict]) -> None:
             for entry in repdata:
                 writer.writerow(
                     {
-                        "account": entry.get("account"),
+                        "account_url": entry.get("account_url"),
                         "container": entry.get("container"),
                         "blob": entry.get("blob")
                     }
@@ -53,11 +53,12 @@ def request(account_url: str, container: str, credential) -> List[dict]:
         for blob in track(blobs):
             #print(blob)
             reqdata = {
-                account_url,
-                container,
-                blob
+                "account_url": account_url,
+                "container": container,
+                "blob": blob
             }
             reqlog.append(reqdata)
+        print(len(reqlog))
         return reqlog
     else:
         logger.warn("CHECK-FAIL: Missing account and/or container")
