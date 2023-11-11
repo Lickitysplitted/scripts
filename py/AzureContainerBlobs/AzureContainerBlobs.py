@@ -1,12 +1,11 @@
 import logging
-from typing import List
+import asyncio
+from typing import List, Optional
 from pathlib import Path
 from csv import DictWriter
 
 import typer
-from rich.progress import track
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import ContainerClient, BlobServiceClient
+from azure.storage.blob.aio import BlobServiceClient
 
 __author__ = "Lickitysplitted"
 __version__ = "0.0.1"
@@ -21,75 +20,84 @@ def reporter(reppath: Path, repdata: List[dict]) -> None:
             writer = DictWriter(
                 repobj,
                 [
-                    "account_url",
-                    "container",
-                    "blob"
+                    'name',
+                    'container',
+                    'size',
+                    'tags',
+                    'lae',
+                    'log source',
+                    'log year',
+                    'log month',
+                    'log day'
                 ],
             )
             writer.writeheader()
             for entry in repdata:
-                writer.writerow(
-                    {
-                        "account_url": entry.get("account_url"),
-                        "container": entry.get("container"),
-                        "blob": entry.get("blob")
-                    }
-                )
+                writer.writerow(entry)
     else:
-        logger.warn("CHECK-FAIL: Missing report path and/or report data")
+        logger.critical ("CHECK-FAIL: Missing report path and/or report data")
 
 
-def request(account_url: str, container: str, credential) -> List[dict]:
-    if account_url and container:
-        azure_log = logging.getLogger("azure")
-        azure_log.setLevel(logging.WARNING)
-        urllib_log = logging.getLogger("urllib3")
-        urllib_log.setLevel(logging.WARNING)
+async def requester(account_url: str, container: str, credential) -> List[dict]:
+    if account_url and container and credential:
         blob_service_client = BlobServiceClient(account_url, credential=credential)
         container_client = blob_service_client.get_container_client(container=container)
-        #container_client = ContainerClient(account_url=account_url, container_name=container, credential=credential)
-        blobs = container_client.list_blob_names()
+
         reqlog = []
-        for blob in track(blobs):
-            #print(blob)
-            reqdata = {
-                "account_url": account_url,
-                "container": container,
-                "blob": blob
-            }
-            reqlog.append(reqdata)
+        async for blob in container_client.list_blobs():
+            name_split = blob.name.split("/")
+            file_name = name_split[-1].split("-")
+            if file_name[0] == 'test.txt':
+                pass
+            else:
+                log_ts_ext = file_name[-1].split(".")
+                log_ts = log_ts_ext[0]
+                if int(log_ts[0:4]) in range(1, 9):
+                    log_ts = file_name[-2]
+                reqdata = {
+                    'name': blob.name,
+                    'container': blob.container,
+                    'size': blob.size,
+                    'tags': blob.tags,
+                    'lae': name_split[0],
+                    'log source': file_name[0],
+                    'log year': log_ts[0:4],
+                    'log month': log_ts[4:6],
+                    'log day': log_ts[6:8]
+                }
+                reqlog.append(reqdata)
         print(len(reqlog))
         return reqlog
     else:
-        logger.warn("CHECK-FAIL: Missing account and/or container")
+        logger.critical("CHECK-FAIL: Missing account and/or container")
 
 
 @app.command()
 def bloblist(
     account: str = typer.Option(help="Azure storage account"),
-    container: str = typer.Option(help="The name of the container for the blob."),
-    credential: str = typer.Option(help="SAS token."),
+    container: str = typer.Option(help="The name of the container for the blob"),
+    credential: str = typer.Option(help="SAS token"),
     report: Path = typer.Option(help="Filepath for report output"),
-    verbose: int = typer.Option(0, "--verbose", "-v", count=True, max=4, help="Log verbosity level"
+    verbose: Optional[int] = typer.Option(0, "--verbose", "-v", count=True, max=4, help="Log verbosity level"
     ),
 ):
     if account and report and container and credential:
-        logging.basicConfig(level=(verbose * 10) - 40)
+        logging.basicConfig(level=(((verbose + 5) * 10) - (verbose * 20)))
         account_url = f'https://{account}.blob.core.windows.net'
-        report = Path(report)
-        #default_credential = DefaultAzureCredential()
         reporter(
             reppath=report,
             repdata=(
-                request(
-                    account_url=account_url,
-                    container=container,
-                    credential=credential
+                asyncio.run(
+                    requester(
+                        account_url=account_url,
+                        container=container,
+                        credential=credential
                     )
+                )
             )
         )
     else:
-        logger.warn("CHECK-FAIL: Missing account, container, and/or report path")
+        logger.critical("CHECK-FAIL: Missing account, container, and/or report path")
 
 
 if __name__ == "__main__":
