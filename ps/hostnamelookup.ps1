@@ -1,9 +1,9 @@
 <# This script will lookup hostnames from a list #>
 
 param(
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [string] $list,
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [string] $csv
 )
 
