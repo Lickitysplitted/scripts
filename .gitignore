@@ -163,3 +163,4 @@ cython_debug/
 # list files
 *.lst
 *.csv
+*.txt
