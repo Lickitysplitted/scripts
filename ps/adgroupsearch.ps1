@@ -1,8 +1,8 @@
 <# This script will take in a list of names/terms and wildcard search AD of groups and output multiple properties, including members, into a csv. #>
 param(
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [string] $file,
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [string] $csv
 )
 function Search-ADGroups{

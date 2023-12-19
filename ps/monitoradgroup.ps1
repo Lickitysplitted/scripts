@@ -1,7 +1,7 @@
 <# This script will monitor a given ad group for changes in members #>
 
 param(
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [string] $identity,
     [Parameter()]
     [string] $interval = 30
