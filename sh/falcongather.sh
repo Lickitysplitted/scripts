@@ -18,7 +18,7 @@ get_kernel(){
 
 get_falcon_pkg_version(){
     echo "## Falcon Pkg Version ##"
-    yum list installed | grep falcon
+    yum list installed | grep falcon | grep falcon
 }
 
 get_falconctl(){
