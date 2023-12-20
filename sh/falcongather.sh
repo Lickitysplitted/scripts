@@ -27,8 +27,14 @@ get_falconctl(){
 }
 
 get_modules(){
+    falcon_mods=`sudo lsmod | grep falcon | awk '{print $1}'`
     echo "## Loaded Falcon Modules ##"
-    sudo lsmod | grep falcon
+    for mod in $falcon_mods
+    do
+        echo "$mod"
+        sudo modinfo $mod
+        sleep 1
+    done
 }
 
 get_falcon_connection(){
@@ -57,8 +63,10 @@ echo "#### OS info ####"
 get_os
 get_kernel
 echo "#### Falcon Info ####"
-get_modules
 get_falcon_archive
 get_falcon_connection
+get_falcon_pkg_version
+get_falconctl
 get_falcon_rfmstate
 check_falcon_kernel
+get_modules
