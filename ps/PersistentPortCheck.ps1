@@ -4,7 +4,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $list,
     [Parameter(Mandatory=$true)]
-    [string] $port
+    [string] $port,
+    [Parameter(Mandatory=$false)]
+    [string] $report
 )
 
 function Test-Port{
