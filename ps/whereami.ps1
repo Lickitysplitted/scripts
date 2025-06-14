@@ -10,7 +10,7 @@
     .\whereami.ps1
 #>
 
-$dnsipsvc = @(("OpenDNS", "myip.opendns.com", "resolver1.opendns.com"),("Google", "o-o.myaddr.l.google.com", "ns1.google.com"))
+$dnsipsvc = @(("OpenDNS", "myip.opendns.com", "resolver1.opendns.com"), ("Google", "o-o.myaddr.l.google.com", "ns1.google.com"))
 $httpipsvc = "checkip.amazonaws.com", "ifconfig.me", "icanhazip.com", "ipecho.net/plain"
 
 # Function to query DNS for external IP
@@ -19,7 +19,8 @@ function Get-DNSExternalIP {
     try {
         $answer = Resolve-DnsName -Name $queryName -Server $server
         Write-Host "'$svcName': $($answer.IPAddress)"
-    } catch {
+    }
+    catch {
         Write-Warning "Error resolving '$svcName': $_"
     }
 }
@@ -29,9 +30,10 @@ function Get-HTTPExternalIP {
     param ($url)
     try {
         $resp = Invoke-WebRequest -Uri $url -TimeoutSec 5
-        Write-Host "$url: $($resp.Content)"
-    } catch {
-        Write-Warning "Error fetching from $url: $_"
+        Write-Host "$url : $($resp.Content)"
+    }
+    catch {
+        Write-Warning "Error fetching from $url : $_"
     }
 }
 
